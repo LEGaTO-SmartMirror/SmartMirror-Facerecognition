@@ -9,7 +9,7 @@
  */
 
 
-Module.register('smartmirror-facerecognition',{
+Module.register('SmartMirror-Facerecognition',{
 
 	defaults: {
 
