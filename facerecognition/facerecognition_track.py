@@ -63,7 +63,7 @@ all_detect_people = [0]
 last_all_detect_people = [0]
 detect_people_bb = [(0,0,0,0)]
 login_timestamp = time.time()
-tracker_sort = Sort()
+tracker_sort = Sort(100,5)
 
 
 def shutdown(self, signum):
@@ -116,6 +116,7 @@ while True:
 	next_user = current_user
 		
 	if ret is False:
+		print("No image")
 		continue
 
 	if FPS_LAST_MAIN != FPS:
@@ -202,7 +203,7 @@ while True:
 
 	for tracker in trackers:
 		cv2.rectangle(new_frame, (int(tracker[0]), int(tracker[1])), (int(tracker[2]), int(tracker[3])), color=(255,50,50), thickness=2)
-		cv2.putText(new_frame, "TrackID: " + str(tracker[4]), (int(tracker[0]), int(tracker[1])-10), cv2.FONT_HERSHEY_DUPLEX, fontScale=1,color=(255, 50, 50), thickness=3)
+		cv2.putText(new_frame, "TrackID: " + str(tracker[4]), (int(tracker[0]), int(tracker[1])-40), cv2.FONT_HERSHEY_DUPLEX, fontScale=1,color=(255, 50, 50), thickness=3)
 
 	ret_caption_frame = np.copy(caption_frame)
 	out_cap.write(ret_caption_frame)
