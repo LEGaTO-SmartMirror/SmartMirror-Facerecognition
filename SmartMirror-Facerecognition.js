@@ -22,13 +22,17 @@ Module.register('SmartMirror-Facerecognition',{
 			this.sendNotification("FACE_REC_IDS" , payload);
 		}else if ( notification == 'recognition') {
 			this.sendNotification("FACE_REC_DETECTIONS" , payload);
-		}
+		}else if ( notification == 'DETECTED_FACES') {
+			this.sendNotification("DETECTED_FACES" , payload);
+		}else if (notification === 'FACE_DET_FPS') {
+			this.sendNotification('FACE_DET_FPS', payload);
+		};
 	},
 
 	notificationReceived: function(notification, payload, sender) {
 		if(notification === 'smartmirror-facerecognitionSetFPS') {
 			this.sendSocketNotification('FaceRecognition_SetFPS', payload);
-        } 
+        };
 	},
 
 	start: function() {

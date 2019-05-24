@@ -38,7 +38,7 @@ class FaceRecognition:
 
         emb_array = np.zeros((1, embedding_size))
         image = facenet.prewhiten(image)
-        image = cv2.resize(image, (input_image_size, input_image_size), interpolation=cv2.INTER_AREA)
+        #image = cv2.resize(image, (input_image_size, input_image_size), interpolation=cv2.INTER_AREA)
         image = image.reshape(-1, input_image_size, input_image_size, 3)
         feed_dict = {images_placeholder: image, phase_train_placeholder: False}
         emb_array[0, :] = self.sess.run(embeddings, feed_dict=feed_dict)

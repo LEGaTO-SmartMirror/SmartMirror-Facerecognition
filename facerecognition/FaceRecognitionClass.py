@@ -12,6 +12,7 @@ from PIL import Image
 import glob
 import os
 import time
+from sort import *
 
 #import matplotlib as mpl
 #mpl.use('Agg')
@@ -96,6 +97,8 @@ class FaceRecognition(object):
             self.face_classfier = None
         if self.profile_activated is True:
             print ("FaceRecognition: initialisation done")
+
+        self.tracker_sort = Sort(25,3)
 
 
     def __del__(self):
@@ -224,7 +227,6 @@ class FaceRecognition(object):
             print ("training done!")
             self.trainingInProgress = False
 
-
     """
     Called to process every frame (basically the main function)
     Need a Frame to process, returns die found identities, confidences and a frame with marks
@@ -239,7 +241,7 @@ class FaceRecognition(object):
             return [],[], frame , caption_frame
 
         identities = []
-	identities_bb = []
+        identities_bb = []
         confidences = []
         caption_frame = np.zeros(frame.shape, np.uint8)
 
@@ -406,3 +408,53 @@ class FaceRecognition(object):
             print (profile_string)
 
         return identities,identities_bb,confidences,frame, caption_frame
+
+
+    def findFacesTracked(self, frame):
+	
+        tracking_dets = []	
+        bbs, scores = face_detector.detect(frame)
+        bbs = bbs[np.argwhere(scores > 0.25).reshape(-1)]
+        scores = scores[np.argwhere(scores > 0.25).reshape(-1)]
+
+        for i in range (0, len(bbs)):
+            tracking_dets.append([int(bbs[i][1]),int(bbs[i][0]),int(bbs[i][3]),int(bbs[i][2]),int(100 * scores[i])])
+		
+        #if len(tracking_dets) == 0:
+        #    tracking_dets.append([])
+
+        trackers = self.tracker_sort.update(np.asarray(tracking_dets))
+
+        int_trackers = []
+
+        for tracker in trackers:
+            if tracker[0] < 0:
+                tracker[0] = 0
+            if tracker[1] < 0:
+                tracker[1] = 0
+            if tracker[2] > 1079:
+                tracker[2] = 1079
+            if tracker[3] > 1919:
+                tracker[3] = 1919
+
+            int_trackers.append([int(tracker[0]),int(tracker[1]),int(tracker[2]),int(tracker[3]),int(tracker[4])])
+
+        return int_trackers
+
+    def identifyFacesInBB(self, frame, bb):
+
+        cropped_face = cv2.UMat(frame[bb[1]:bb[3], bb[0]:bb[2], :])
+
+        alignedFace = cv2.UMat.get(cv2.resize(cropped_face, (160, 160), interpolation=cv2.INTER_AREA))
+
+        rep = face_recognition.recognize(alignedFace)
+        rep = rep.reshape(1, -1)
+        predictions = self.face_classfier.classify(rep).ravel()
+
+        maxI = np.argmax(predictions)
+        if predictions[maxI] <= self.identify_threshold:
+            maxI = 0
+
+        return (self.people[str(maxI)] , maxI, predictions[maxI])
+
+

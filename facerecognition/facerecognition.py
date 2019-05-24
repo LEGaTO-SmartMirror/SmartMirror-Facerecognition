@@ -56,8 +56,6 @@ def to_node(type, message):
 	sys.stdout.flush()
 
 # Setup variables
-current_user = -1
-next_user = -1
 identities_counter = [0]
 all_detect_people = [0]
 last_all_detect_people = [0]
@@ -112,7 +110,6 @@ while True:
 
 	start_time = time.time()
 	ret, frame = cap.read()
-	next_user = current_user
 		
 	if ret is False:
 		continue
