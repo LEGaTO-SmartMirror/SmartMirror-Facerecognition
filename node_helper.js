@@ -8,7 +8,7 @@ module.exports = NodeHelper.create({
 
  	python_start: function () {
 		const self = this;
-    		self.pyshell = new PythonShell('modules/' + this.name + '/facerecognition/facerecognition_track2.py', { pythonPath: 'python', args: [JSON.stringify(this.config)]});
+    		self.pyshell = new PythonShell('modules/' + this.name + '/facerecognition/facerecognition_tracked.py', { pythonPath: 'python', args: [JSON.stringify(this.config)]});
 
 
     		self.pyshell.on('message', function (message) {

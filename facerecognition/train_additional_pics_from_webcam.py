@@ -30,8 +30,8 @@ if (not cap.isOpened()):
 else:
 
     fr.training = True
-    fr.training_name = "Timm"
-    fr.training_id = 13
+    fr.training_name = "Kevin"
+    fr.training_id = 14
     number_of_training_images = 60
 
     print("Starting Training for: " + fr.training_name + " with ID: " + str(fr.training_id))
@@ -44,7 +44,7 @@ else:
 
         if ret:
             rot_frame = cv2.flip(np.rot90(frame,1),1)
-            identies, confidences, new_frame, cap_image = fr.processframe(rot_frame)
+            identies, identies_bb, confidences, new_frame, cap_image = fr.processframe(rot_frame)
             cv2.imshow('video_realtime',new_frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
