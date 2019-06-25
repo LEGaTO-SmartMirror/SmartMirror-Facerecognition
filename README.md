@@ -1,4 +1,4 @@
-# smartmirror-facerecognition
+# SmartMirror-Facerecognition
 [MagicMirror²](https://github.com/MichMich/MagicMirror) module for face recognition. This module shall be optimized with the [LEGaTO](https://legato-project.eu/) toolkit for energy efficiency.
 Uses the camera stream of the [SmartMirror-Camera-Publisher](https://github.com/LEGaTO-SmartMirror/SmartMirror-Camera-Publisher), which creates a appsink under /tmp/camera_image_1m .
 It returns a json object with the position, tracking id, id, confidence, and name of each detected Face to the scope "DETECTED_FACES".
