@@ -30,9 +30,9 @@ if (not cap.isOpened()):
 else:
 
     fr.training = True
-    fr.training_name = "Kevin"
-    fr.training_id = 14
-    number_of_training_images = 60
+    fr.training_name = "Micha"
+    fr.training_id = 16
+    number_of_training_images = 100
 
     print("Starting Training for: " + fr.training_name + " with ID: " + str(fr.training_id))
     print("Taking " + str(number_of_training_images) + "pictures")

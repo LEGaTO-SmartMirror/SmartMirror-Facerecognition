@@ -2,3 +2,5 @@
 *.pyc
 
 facerecognition/facedatabase/images/*
+*.py_back
+__init__.py
