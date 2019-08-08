@@ -12,9 +12,13 @@
 Module.register('SmartMirror-Facerecognition',{
 
 	defaults: {
-
+		// camera image size. This module has no image output!
+		image_height: 1080,
+		image_width: 1920,
+		// path to appsink of gstreamer.
+		image_stream_path: "/dev/shm/camera_image"
 	},
-
+	
 	// Override socket notification handler.
 	socketNotificationReceived: function(notification, payload) {
 		if ( notification == 'recognised_identities') {

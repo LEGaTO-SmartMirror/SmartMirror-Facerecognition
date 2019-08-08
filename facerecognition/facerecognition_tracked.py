@@ -15,6 +15,40 @@ import random
 
 from FaceRecognitionClass import FaceRecognition
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning) 
+
+
+def to_node(type, message):
+	# convert to json and print (node helper will read from stdout)
+	try:
+		print(json.dumps({type: message}))
+	except Exception:
+		print("failed to json")
+		pass
+	# stdout has to be flushed manually to prevent delays in the node helper communication
+	sys.stdout.flush()
+
+#Full HD image as default
+IMAGE_HEIGHT = 1080
+IMAGE_WIDTH = 1920
+
+try:
+	to_node("status", "starting with config: " + sys.argv[1])
+	config = json.loads(sys.argv[1])
+	if 'image_height' in config:
+		IMAGE_HEIGHT = int(config['image_height'])
+	if 'image_width' in config:
+		IMAGE_WIDTH = int(config['image_width'])
+	if 'image_stream_path' in config:
+		IMAGE_STREAM_PATH = str(config['image_stream_path'])
+		
+		
+except:
+	to_node("status", "Not a valid config.. exiting!")
+	quit()
+	
+
 global global_FPS
 global_FPS = 30.0
 FPS_real = 10.0
@@ -24,17 +58,9 @@ face_update_counter = 0
 
 fr = FaceRecognition(False)
 
-cap = cv2.VideoCapture("shmsrc socket-path=/tmp/camera_1m ! video/x-raw, format=BGR ,height=1920,width=1080,framerate=30/1 ! videoconvert ! video/x-raw, format=BGR ! appsink drop=true", cv2.CAP_GSTREAMER)
-#cap = cv2.VideoCapture("shmsrc socket-path=/tmp/camera_image ! video/x-raw, format=BGR ,height=1920,width=1080,framerate=30/1 ! videoconvert ! video/x-raw, format=BGR ! appsink drop=true", cv2.CAP_GSTREAMER)
+to_node("status", "face recognition initialised")
 
-def to_node(type, message):
-	# convert to json and print (node helper will read from stdout)
-	try:
-		print(json.dumps({type: message}))
-	except Exception:
-		pass
-	# stdout has to be flushed manually to prevent delays in the node helper communication
-	sys.stdout.flush()
+cap = cv2.VideoCapture("shmsrc socket-path="+ str(IMAGE_STREAM_PATH) +" ! video/x-raw, format=BGR, height=" + str(IMAGE_HEIGHT) + ", width="+ str(IMAGE_WIDTH) + ", framerate=30/1 ! videoconvert ! video/x-raw, format=BGR ! appsink drop=true", cv2.CAP_GSTREAMER)
 
 def shutdown(self, signum):
 	to_node("status", 'Shutdown: Cleaning up camera...')
@@ -49,23 +75,23 @@ signal.signal(signal.SIGINT, shutdown)
 def convertToCenterWH(a,b,c,d):
 	h = float(d - b)
 	w = float(c - a)
-	x = float((a + (w/2)) / 1080)
-	y = float((b + (h/2)) / 1920)
-	return (x,y),(w/1080,h/1920)
+	x = float((a + (w/2)) / IMAGE_WIDTH)
+	y = float((b + (h/2)) / IMAGE_HEIGHT)
+	return (x,y),(w/IMAGE_WIDTH,h/IMAGE_HEIGHT)
 
 def check_stdin():
 	global global_FPS
 	while True:
 		lines = sys.stdin.readline()
-		to_node("status", "Changing: " + lines)
 		data = json.loads(lines)
+		to_node("status", "Changing: " + json.dumps(data))		
 		if 'FPS' in data:
 			global_FPS = data['FPS']
 
 
 #rastering..
-horizontal_division = 270.0
-vertical_division =  480.0
+horizontal_division = 480.0 #270.0
+vertical_division =  270.0 #480.0
 
 t = Thread(target=check_stdin)
 t.start()
@@ -74,7 +100,7 @@ t.start()
 
 time.sleep(1)
 
-to_node("status", "Facerecognition started...")
+to_node("status", "Facerecognition started, but TensorFlow will alocate memory at the first run. Entering main loop.")
 
 FaceDict = {}
 last_detection_list = []
@@ -97,16 +123,22 @@ while True:
 		continue
 	
 	#identities, identities_bb, confidences, new_frame, caption_frame = fr.processframe(frame)
-	trackers = fr.findFacesTracked(frame)
+	trackers = fr.findFacesTracked(frame, IMAGE_HEIGHT, IMAGE_WIDTH)
 	
+	New_FaceDict = {}
 	for k in FaceDict.keys():
 		found = False
+		
 		for tracker in trackers:		
 			if  FaceDict[k][4] == tracker[4]:
 				found = True
-		if found is False:
+		
+		if found is True:
+			New_FaceDict[k] = FaceDict[k]
+		else:
 			to_node("status","lost face with id: " + str(k))
-			FaceDict.pop(k)
+
+	FaceDict = New_FaceDict
 
 	for tracker in trackers:
 		if tracker[4] in FaceDict:
@@ -150,7 +182,7 @@ while True:
 		center =  int(center[0] * horizontal_division) / horizontal_division , int(center[1] * vertical_division) / vertical_division
 		w_h =  int(w_h[0] * horizontal_division) / horizontal_division , int(w_h[1] * vertical_division) / vertical_division
 
-		detection_list.append({"confidence": float("{0:.2f}".format(FaceDict[k][7])),"TrackID": FaceDict[k][4] , "name": FaceDict[k][5], "id": FaceDict[k][6], "w_h": (float("{0:.5f}".format(w_h[0])),float("{0:.5f}".format(w_h[1]))) ,"center": (float("{0:.5f}".format(center[0])),float("{0:.5f}".format(center[1])))} )
+		detection_list.append({"confidence": float("{0:.2f}".format(FaceDict[k][7])),"TrackID": int(FaceDict[k][4]) , "name": str(FaceDict[k][5]), "id": int(FaceDict[k][6]), "w_h": (float("{0:.5f}".format(w_h[0])),float("{0:.5f}".format(w_h[1]))) ,"center": (float("{0:.5f}".format(center[0])),float("{0:.5f}".format(center[1])))} )
 
 		#cv2.rectangle(frame, (FaceDict[k][0], FaceDict[k][1]), (FaceDict[k][2], FaceDict[k][3]), color=(255,50,50), thickness=2)
 		#cv2.putText(frame, "TrackID: " + str(FaceDict[k][4]), (FaceDict[k][0], FaceDict[k][1] - 40), cv2.FONT_HERSHEY_DUPLEX, fontScale=1,color=(255, 50, 50), thickness=2)
@@ -163,10 +195,10 @@ while True:
 		equality_counter = 0
 		for prev_element in last_detection_list:
 			for next_element in detection_list:
-				if next_element["center"] == prev_element["center"] and next_element["name"] == prev_element["name"]:
+				if next_element["center"][0] == prev_element["center"][0] and next_element["center"][1] == prev_element["center"][1] and next_element["name"] == prev_element["name"]:
 					equality_counter += 1
-			
-		if not (equality_counter == len(last_detection_list) == len(detection_list)):
+		
+		if  not (equality_counter == len(last_detection_list) == len(detection_list)):
 			to_node("DETECTED_FACES",detection_list)
 			last_detection_list = detection_list
 
@@ -188,8 +220,7 @@ while True:
 		achieved_FPS_counter = 0.0
 		achieved_FPS = 0.0
 
-	#cv2.putText(frame, str((round(1.0/frame_time,1))) + " FPS", (50,50), cv2.FONT_HERSHEY_DUPLEX, fontScale=1,color=(255, 50, 50), thickness=3)
-
+	#cv2.putText(frame, str((round(1.0/delta,1))) + " FPS", (50,50), cv2.FONT_HERSHEY_DUPLEX, fontScale=1,color=(255, 50, 50), thickness=3)
 	#cv2.imshow("face detection", frame)
 	#cv2.waitKey(1)
 

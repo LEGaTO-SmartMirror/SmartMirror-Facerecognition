@@ -8,7 +8,7 @@ module.exports = NodeHelper.create({
 
  	python_start: function () {
 		const self = this;
-    		self.pyshell = new PythonShell('modules/' + this.name + '/facerecognition/facerecognition_tracked.py', { pythonPath: 'python', args: [JSON.stringify(this.config)]});
+    		self.pyshell = new PythonShell('modules/' + this.name + '/facerecognition/facerecognition_tracked.py', { pythonPath: 'python3', args: [JSON.stringify(this.config)]});
 
 
     		self.pyshell.on('message', function (message) {
@@ -17,18 +17,13 @@ module.exports = NodeHelper.create({
 				//console.log("[MSG " + self.name + "] " + parsed_message);
       				if (parsed_message.hasOwnProperty('status')){
       					console.log("[" + self.name + "] " + parsed_message.status);
-      				}else if (parsed_message.hasOwnProperty('detected')){
-						self.sendSocketNotification('recognition', parsed_message.detected)
-					}else if (parsed_message.hasOwnProperty('DETECTED_FACES')){
-						self.sendSocketNotification('DETECTED_FACES', parsed_message)
-					}else if (parsed_message.hasOwnProperty('FACE_DET_FPS')){
-						self.sendSocketNotification('FACE_DET_FPS', parsed_message.FACE_DET_FPS);
-					}	
-					//if (parsed_message.hasOwnProperty('recognised_identities')){
-						//self.sendSocketNotification('recognised_identities', parsed_message.recognised_identities);
-						//console.log("[" + self.name + "] recognised_identities " + parsed_message.recognised_identities);
-					//	self.sendSocketNotification('recognition', parsed_message)
-					//}
+      				}else if (parsed_message.hasOwnProperty('DETECTED_FACES')){
+					self.sendSocketNotification('DETECTED_FACES', parsed_message)
+					//console.log("[" + self.name + "] DETECTED_FACES: " + JSON.stringify(parsed_message));
+				}else if (parsed_message.hasOwnProperty('FACE_DET_FPS')){
+					self.sendSocketNotification('FACE_DET_FPS', parsed_message.FACE_DET_FPS);
+					//console.log("[" + self.name + "] face detection fps: " + JSON.stringify(parsed_message));
+				}	
 			}
 			catch(err) {
 				console.log("[" + self.name + "] a non json message received");

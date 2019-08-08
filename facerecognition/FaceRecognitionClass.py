@@ -410,7 +410,7 @@ class FaceRecognition(object):
         return identities,identities_bb,confidences,frame, caption_frame
 
 
-    def findFacesTracked(self, frame):
+    def findFacesTracked(self, frame, height, width):
 	
         tracking_dets = []	
         bbs, scores = face_detector.detect(frame)
@@ -432,10 +432,10 @@ class FaceRecognition(object):
                 tracker[0] = 0
             if tracker[1] < 0:
                 tracker[1] = 0
-            if tracker[2] > 1079:
-                tracker[2] = 1079
-            if tracker[3] > 1919:
-                tracker[3] = 1919
+            if tracker[2] > (width - 1):
+                tracker[2] = (width - 1)
+            if tracker[3] > (height - 1) :
+                tracker[3] = (height - 1)
 
             int_trackers.append([int(tracker[0]),int(tracker[1]),int(tracker[2]),int(tracker[3]),int(tracker[4])])
 
