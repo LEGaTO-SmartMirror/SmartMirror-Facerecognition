@@ -4,3 +4,4 @@
 facerecognition/facedatabase/images/*
 *.py_back
 __init__.py
+*_back
