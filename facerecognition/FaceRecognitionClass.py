@@ -238,7 +238,7 @@ class FaceRecognition(object):
             start_time = time.time()
 
         if self.trainingInProgress is True:
-            return [],[], frame , caption_frame
+            return [],[],[], frame , caption_frame
 
         identities = []
         identities_bb = []
@@ -258,7 +258,7 @@ class FaceRecognition(object):
             if len(bbs) is not 1:
                 if self.profile_activated is True:
                     print ("FaceRecognition: Need to find exacly one Person")
-                return [],[], frame, caption_frame
+                return [],[],[], frame, caption_frame
             else:
                 if self.profile_activated is True:
                     print ("FaceRecognition: I want to train.. Taking Picture! Please move to differnt angles")
@@ -316,7 +316,7 @@ class FaceRecognition(object):
             else:
                 """if we are training a the face_recognition nn can be occupied!"""
                 if self.trainingInProgress is True:
-                    return [],[], frame , caption_frame, 
+                    return [],[], [], frame , caption_frame, 
                 rep = face_recognition.recognize(alignedFace)
 
                 if self.training is True:

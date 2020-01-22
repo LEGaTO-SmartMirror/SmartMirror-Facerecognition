@@ -26,7 +26,7 @@ cv2.namedWindow('video_realtime', cv2.WINDOW_NORMAL)
 fr = FaceRecognition(True)
 
 if (not cap.isOpened()):
-    print "could not open webcam"
+    print ("could not open webcam")
 else:
 
     print("Warning: face representation are build fresh!!")
@@ -44,7 +44,7 @@ else:
 
         if ret:
             rot_frame = cv2.flip(np.rot90(frame,1),1)
-            identies, confidences, new_frame, caption_frame = fr.processframe(rot_frame)
+            identies, identies_bb, confidences, new_frame, caption_frame = fr.processframe(rot_frame)
             cv2.imshow('video_realtime',new_frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):

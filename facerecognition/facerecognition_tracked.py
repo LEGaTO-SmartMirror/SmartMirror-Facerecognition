@@ -29,9 +29,9 @@ def to_node(type, message):
 	# stdout has to be flushed manually to prevent delays in the node helper communication
 	sys.stdout.flush()
 
-#Full HD image as default
-IMAGE_HEIGHT = 1080
-IMAGE_WIDTH = 1920
+IMAGE_HEIGHT = 1920
+IMAGE_WIDTH = 1080
+IMAGE_STREAM_PATH = "/dev/shm/camera_image"
 
 try:
 	to_node("status", "starting with config: " + sys.argv[1])
@@ -46,7 +46,7 @@ try:
 		
 except:
 	to_node("status", "Not a valid config.. exiting!")
-	quit()
+	#quit()
 	
 
 global global_FPS
@@ -100,7 +100,7 @@ t.start()
 
 time.sleep(1)
 
-to_node("status", "Facerecognition started, but TensorFlow will alocate memory at the first run. Entering main loop.")
+to_node("status", "Facerecognition started, but TensorFlow will allocate memory at the first run. Entering main loop.")
 
 FaceDict = {}
 last_detection_list = []
@@ -115,6 +115,7 @@ while True:
 
 	if FPS == 0:
 			time.sleep(1)
+			to_node("FACE_DET_FPS", float("{0:.2f}".format(0.0)));
 			continue
 
 
