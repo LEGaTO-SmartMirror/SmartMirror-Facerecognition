@@ -26,12 +26,12 @@ cv2.namedWindow('video_realtime', cv2.WINDOW_NORMAL)
 fr = FaceRecognition(False)
 
 if (not cap.isOpened()):
-    print "could not open webcam"
+    print ("could not open webcam")
 else:
 
     fr.training = True
-    fr.training_name = "Micha"
-    fr.training_id = 16
+    fr.training_name = "Alex"
+    fr.training_id = 8
     number_of_training_images = 100
 
     print("Starting Training for: " + fr.training_name + " with ID: " + str(fr.training_id))
