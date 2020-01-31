@@ -2,6 +2,7 @@
 const NodeHelper = require('node_helper');
 
 const {PythonShell} = require("python-shell");
+const { exec } = require('child_process');
 var pythonStarted = false;
 
 module.exports = NodeHelper.create({
@@ -29,6 +30,12 @@ module.exports = NodeHelper.create({
 				console.log("[" + self.name + "] a non json message received");
 			}
     		});
+			exec(`renice -n 20 -p ${self.pyshell.childProcess.pid}`,(error,stdout,stderr) => {
+				if (error) {
+					console.error(`exec error: ${error}`);
+  				}
+			});
+	
   	},
 
   // Subclass socketNotificationReceived received.
