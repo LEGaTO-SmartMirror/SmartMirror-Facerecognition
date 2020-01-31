@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 import tensorflow as tf
+if (tf.__version__ == "1.15.1"):
+    import tensorflow.compat.v1 as tf
 from recognition import facenet
 
 CUDA_VISIBLE_DEVICES=0,1
