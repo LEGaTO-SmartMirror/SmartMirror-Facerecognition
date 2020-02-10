@@ -6,7 +6,7 @@ if (tf.__version__ == "1.15.1"):
     import tensorflow.compat.v1 as tf
 from recognition import facenet
 
-CUDA_VISIBLE_DEVICES=0,1
+CUDA_VISIBLE_DEVICES=1
 
 BASE_DIR = os.path.dirname(__file__) + '/'
 
@@ -21,7 +21,7 @@ class FaceRecognition:
         self.recognition_graph = tf.Graph()
         config = tf.ConfigProto(device_count = {'GPU': 1})
         #config.gpu_options.allow_growth = True
-        config.gpu_options.per_process_gpu_memory_fraction = 0.3
+        config.gpu_options.per_process_gpu_memory_fraction = 0.1
         self.sess = tf.Session(graph=self.recognition_graph,config=config)
         #print('Loading feature extraction model')
         with self.sess.as_default():
