@@ -32,7 +32,8 @@ else:
         ret, frame = cap.read()
 
         if ret:
-            rot_frame = cv2.flip(np.rot90(frame,1),1)
+            #rot_frame = cv2.flip(np.rot90(frame,1),1)
+            rot_frame = cv2.flip(frame,1)
             identies, identies_bb, confidences, new_frame, cap_image = fr.processframe(rot_frame)
             cv2.imshow('video_realtime',new_frame)
 
