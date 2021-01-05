@@ -279,19 +279,16 @@ int main(int argc, char* argv[])
 		// Add bounding boxes to frame
 		for (auto& [id, box] : g_boxes)
 		{
-			if (box.Valid())
+			if (box.Valid() && changed)
 			{
+				BBox centerBox = ToCenter(box.bBox);
+				if (i > 0) str << ", ";
+
+				str << string_format("{\"TrackID\": %d, \"center\": [%.5f,%.5f], \"name\": \"%s\", \"w_h\": [%.5f,%.5f], \"confidence\": %.2f, \"id\": %d}",
+									id, centerBox.x, centerBox.y, box.name.c_str(), centerBox.width, centerBox.height, box.confidence, box.faceID);
+				i++;
+
 				lastObjs.push_back(box);
-
-				if(changed)
-				{
-					BBox centerBox = ToCenter(box.bBox);
-					if (i > 0) str << ", ";
-
-					str << string_format("{\"TrackID\": %d, \"center\": [%.5f,%.5f], \"name\": \"%s\", \"w_h\": [%.5f,%.5f], \"confidence\": %.2f, \"id\": %d}",
-										id, centerBox.x, centerBox.y, box.name.c_str(), centerBox.width, centerBox.height, box.confidence, box.faceID);
-					i++;
-				}
 			}
 
 			box.lastUpdate++;
