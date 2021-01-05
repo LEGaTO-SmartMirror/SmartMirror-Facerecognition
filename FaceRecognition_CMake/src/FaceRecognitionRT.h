@@ -182,7 +182,7 @@ public:
 						for (const TrackingObject& box : trackingDets)
 						{
 							// Crop out only the face
-							alignedFaces.push_back(CropAndAlignFace(image, box.bBox));
+							alignedFaces.push_back(CropAndAlignFaceFactor(image, box.bBox));
 						}
 					}
 

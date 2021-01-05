@@ -56,6 +56,8 @@ using BBoxes = std::vector<BBox>;
 #define THRESHED_CMP(a, b, OP) (a == b)
 #endif
 
+static const float INIT_CONFIDENCE = 0.4f;
+
 struct TrackingObject
 {
 	TrackingObject() :
@@ -66,6 +68,7 @@ struct TrackingObject
 		name("Unknown"),
 		lastCheck(0),
 		lastUpdate(0),
+		confidence(INIT_CONFIDENCE),
 		face()
 	{
 	}
@@ -78,6 +81,7 @@ struct TrackingObject
 		name("Unknown"),
 		lastCheck(-1),
 		lastUpdate(0),
+		confidence(INIT_CONFIDENCE),
 		face()
 	{
 	}
@@ -90,6 +94,7 @@ struct TrackingObject
 		name(nName),
 		lastCheck(-1),
 		lastUpdate(0),
+		confidence(INIT_CONFIDENCE),
 		face()
 	{
 	}
@@ -120,8 +125,8 @@ struct TrackingObject
 	bool CmpNameAndXY(const TrackingObject& rhs) const
 	{
 		if (this->name != rhs.name) return false;
-		if (this->bBox.x != rhs.bBox.x) return false;
-		if (this->bBox.y != rhs.bBox.y) return false;
+		if (THRESHED_CMP(this->bBox.x, rhs.bBox.x, >=)) return false;
+		if (THRESHED_CMP(this->bBox.y, rhs.bBox.y, >=)) return false;
 
 		return true;
 	}
@@ -133,6 +138,7 @@ struct TrackingObject
 	std::string name;
 	int32_t lastCheck;
 	uint32_t lastUpdate;
+	float confidence;
 	cv::Mat face;
 };
 

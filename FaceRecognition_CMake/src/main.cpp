@@ -27,6 +27,8 @@
 // Disable Tensorflow log messages
 // export TF_CPP_MIN_LOG_LEVEL=2
 
+#define DIFF_THRESHOLD 0.005
+
 #include <opencv2/video/video.hpp>
 
 #include "FaceDetector.h"
@@ -50,7 +52,7 @@ using namespace std::chrono_literals;
 
 // =========================================================
 
-const int32_t FACE_RECHECK_FRAMES = 30; // Recheck faces in 30 frames again
+const int32_t FACE_RECHECK_FRAMES = 15; // Recheck faces in 15 frames again
 
 const double ONE_SECOND = 1000.0;
 
@@ -82,8 +84,25 @@ void ProcessFaces()
 						std::cerr << "Reidentifying Face [" << box.trackingID << "] ... " << std::flush;
 
 					checkTimer.Start();
-					box.faceID    = fr.IdentifyFaceID(box.face);
-					box.name      = fr.FaceID2Name(box.faceID);
+
+					uint32_t newFaceID = fr.IdentifyFaceID(box.face);
+
+					if(box.faceID == newFaceID)
+					{
+						if(box.confidence < 1.0f)
+							box.confidence += 0.1f;
+					}
+					else
+					{
+						if(box.confidence > 0.0f)
+							box.confidence -= 0.1f;
+					}
+
+					if(box.confidence <= 0.4f)
+					{
+						box.faceID    = newFaceID;
+						box.name      = fr.FaceID2Name(box.faceID);
+					}
 					box.lastCheck = FACE_RECHECK_FRAMES;
 					checkTimer.Stop();
 
@@ -107,15 +126,24 @@ void UpdateGlobalBox(const TrackingObjects& boxes, const cv::Mat& frame)
 		g_boxes.try_emplace(box.trackingID, box);
 		g_boxes[box.trackingID].bBox       = box.bBox;
 		g_boxes[box.trackingID].lastUpdate = 0;
-		// TODO: cut out face each time or just every x-Frames?
-		g_boxes[box.trackingID].face = FaceRecognitionRT::CropAndAlignFaceFactor(frame, box.bBox);
 
 		if (g_boxes[box.trackingID].lastCheck == -1)
+		{
+			g_boxes[box.trackingID].face = FaceRecognitionRT::CropAndAlignFaceFactor(frame, box.bBox);
 			g_boxes[box.trackingID].lastCheck = 0;
+		}
 
 		if (g_boxes[box.trackingID].lastCheck > 0)
+		{
+			if(g_boxes[box.trackingID].lastCheck == 1)
+				g_boxes[box.trackingID].face = FaceRecognitionRT::CropAndAlignFaceFactor(frame, box.bBox);
+
 			g_boxes[box.trackingID].lastCheck--;
+
+		}
 	}
+
+	map_erase_if(g_boxes, [](const std::pair<uint32_t, TrackingObject>& p) { return !p.second.Valid(); });
 }
 
 BBox ToCenter(const BBox& bBox)
@@ -192,7 +220,6 @@ int main(int argc, char* argv[])
 	timeout.tv_sec  = 0;
 	timeout.tv_usec = 0;
 	char message[BUFSIZ];
-	uint32_t equalityCounter = 0;
 
 	fpsTimer.Start();
 
@@ -215,8 +242,7 @@ int main(int argc, char* argv[])
 		if (maxFPS == 0)
 		{
 			std::this_thread::sleep_for(std::chrono::seconds(1));
-			printf("{\"FACE_DET_FPS\": 0.0}\n");
-			fflush(stdout);
+			std::cout << "{\"FACE_DET_FPS\": 0.0}" << std::endl << std::flush;
 			continue;
 		}
 
@@ -231,18 +257,19 @@ int main(int argc, char* argv[])
 		boxes = fd.FindFacesTracked(frame);
 		UpdateGlobalBox(boxes, frame);
 
-		equalityCounter = 0;
-		for (const TrackingObject& lastObj : lastObjs)
+		if(g_boxes.size() != lastObjs.size())
+			changed = true;
+		else
 		{
-			for (const auto& [id, box] : g_boxes)
+			for (const auto& [idx, box] : enumerate(g_boxes))
 			{
-				if (lastObj.CmpNameAndXY(box))
-					equalityCounter++;
+				if(!lastObjs.at(idx).CmpNameAndXY(box.second))
+					changed = true;
+
+				if(lastObjs.at(idx).confidence != box.second.confidence)
+					changed = true;
 			}
 		}
-
-		if (g_boxes.size() != lastObjs.size() || g_boxes.size() != equalityCounter)
-			changed = true;
 
 		lastObjs.clear();
 		lastObjs.reserve(g_boxes.size());
@@ -252,24 +279,28 @@ int main(int argc, char* argv[])
 		// Add bounding boxes to frame
 		for (auto& [id, box] : g_boxes)
 		{
-			if (box.Valid() && changed)
+			if (box.Valid())
 			{
-				BBox centerBox = ToCenter(box.bBox);
-				if (i > 0) str << ", ";
+				lastObjs.push_back(box);
 
-				str << string_format("{\"TrackID\": %d, \"center\": [%.5f,%.5f], \"name\": \"%s\", \"w_h\": [%.5f,%.5f], \"confidence\": 1.0, \"id\": %d}",
-									 id, centerBox.x, centerBox.y, box.name.c_str(), centerBox.width, centerBox.height, box.faceID);
-				i++;
+				if(changed)
+				{
+					BBox centerBox = ToCenter(box.bBox);
+					if (i > 0) str << ", ";
+
+					str << string_format("{\"TrackID\": %d, \"center\": [%.5f,%.5f], \"name\": \"%s\", \"w_h\": [%.5f,%.5f], \"confidence\": %.2f, \"id\": %d}",
+										id, centerBox.x, centerBox.y, box.name.c_str(), centerBox.width, centerBox.height, box.confidence, box.faceID);
+					i++;
+				}
 			}
 
 			box.lastUpdate++;
-			lastObjs.push_back(box);
 		}
 
 		if (changed)
 		{
 			str << "]}";
-			std::cout << str.str() << std::endl;
+			std::cout << str.str() << std::endl << std::flush;
 		}
 
 		frameCnt++;
@@ -287,7 +318,7 @@ int main(int argc, char* argv[])
 		{
 			if (fps > maxFPS) fps = maxFPS;
 
-			std::cout << string_format("{\"FACE_DET_FPS\": %.2f}\n", fps) << std::flush;
+			std::cout << string_format("{\"FACE_DET_FPS\": %.2f}", fps) << std::endl << std::flush;
 
 			elapsedTime = 0;
 			frameCnt    = 0;
