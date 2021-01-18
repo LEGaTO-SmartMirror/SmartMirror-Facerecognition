@@ -71,7 +71,7 @@ module.exports = NodeHelper.create({
  		if(notification === 'FaceRecognition_SetFPS') {
 			if(cAppStarted) {
 				self.facerec.stdin.write(payload.toString() + "\n");
-				console.log("[" + self.name + "] changing to: " + payload.toString() + " FPS");
+				//console.log("[" + self.name + "] changing to: " + payload.toString() + " FPS");
             }
         }else if(notification === 'FACEDETECTION_CONFIG') {
       		self.config = payload
